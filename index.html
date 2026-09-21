@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Service Stack</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#14213d">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Service Stack">
+<style>
+  :root {
+    --bg: #f7f5f0;
+    --bg-card: #ffffff;
+    --bg-alt: #eef1f6;
+    --text: #1c2430;
+    --text-muted: #5b6472;
+    --border: #dde2ea;
+    --navy: #14213d;
+    --navy-light: #253863;
+    --gold: #c9a24b;
+    --gold-dark: #a8842f;
+    --green: #2f7d54;
+    --red: #b3432b;
+    --shadow: 0 1px 3px rgba(20,33,61,0.08), 0 1px 2px rgba(20,33,61,0.06);
+  }
+  :root:not([data-theme="light"]) {
+    @media (prefers-color-scheme: dark) {
+      --bg: #10141d;
+      --bg-card: #1a2130;
+      --bg-alt: #212a3d;
+      --text: #eef1f6;
+      --text-muted: #9aa5b5;
+      --border: #2c374d;
+      --navy: #1e2c4f;
+      --navy-light: #2c3f6e;
+      --gold: #d9b968;
+      --gold-dark: #c9a24b;
+      --shadow: 0 1px 3px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.3);
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #10141d;
+    --bg-card: #1a2130;
+    --bg-alt: #212a3d;
+    --text: #eef1f6;
+    --text-muted: #9aa5b5;
+    --border: #2c374d;
+    --navy: #1e2c4f;
+    --navy-light: #2c3f6e;
+    --gold: #d9b968;
+    --gold-dark: #c9a24b;
+    --shadow: 0 1px 3px rgba(0,0,0,0.4), 0 1px 2px rgba(0,0,0,0.3);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.5;
+  }
+  .app { max-width: 1080px; margin: 0 auto; padding: 0 16px 64px; }
+
+  header.top {
+    background: linear-gradient(135deg, var(--navy), var(--navy-light));
+    color: #f5f0e2;
+    padding: 28px 16px 20px;
+    margin-bottom: 0;
+  }
+  header.top .inner { max-width: 1080px; margin: 0 auto; }
+  header.top h1 {
+    margin: 0;
+    font-size: 1.7rem;
+    letter-spacing: 0.03em;
+    color: var(--gold);
+  }
+  header.top p {
+    margin: 4px 0 0;
+    color: #d7d3c4;
+    font-size: 0.95rem;
+  }
+
+  nav.tabs {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    gap: 2px;
+    overflow-x: auto;
+    background: var(--bg-card);
+    border-bottom: 1px solid var(--border);
+    box-shadow: var(--shadow);
+  }
+  nav.tabs button {
+    flex: 1 0 auto;
+    padding: 12px 14px;
+    background: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  nav.tabs button.active {
+    color: var(--navy-light);
+    border-bottom-color: var(--gold);
+  }
+  :root[data-theme="dark"] nav.tabs button.active,
+  @media (prefers-color-scheme: dark) { nav.tabs button.active { color: var(--gold); } }
+
+  section.panel { display: none; padding-top: 22px; }
+  section.panel.active { display: block; }
+
+  h2.section-title {
+    font-size: 1.3rem;
+    color: var(--navy-light);
+    border-bottom: 2px solid var(--gold);
+    padding-bottom: 6px;
+    margin: 28px 0 14px;
+  }
+  h3.sub-title { font-size: 1.05rem; margin: 20px 0 8px; color: var(--text); }
+
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 18px;
+    margin-bottom: 14px;
+    box-shadow: var(--shadow);
+  }
+  .card h4 { margin: 0 0 6px; color: var(--gold-dark); font-size: 1rem; }
+  .card p { margin: 0; color: var(--text-muted); font-size: 0.92rem; }
+
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  @media (max-width: 720px) { .grid3 { grid-template-columns: 1fr; } }
+
+  table.matrix { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 0.85rem; overflow-x: auto; display: block; }
+  table.matrix th, table.matrix td { border: 1px solid var(--border); padding: 10px; text-align: left; vertical-align: top; }
+  table.matrix th { background: var(--bg-alt); color: var(--navy-light); }
+  :root[data-theme="dark"] table.matrix th { color: var(--gold); }
+  @media (prefers-color-scheme: dark) { table.matrix th { color: var(--gold); } }
+
+  .pill-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; }
+  .pill-list li {
+    background: var(--bg-alt);
+    border-left: 4px solid var(--gold);
+    padding: 10px 12px;
+    border-radius: 6px;
+    font-size: 0.92rem;
+  }
+
+  label { display: block; font-size: 0.82rem; font-weight: 600; color: var(--text-muted); margin: 12px 0 4px; }
+  input[type="text"], input[type="number"], input[type="date"], select, textarea {
+    width: 100%;
+    padding: 9px 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 0.92rem;
+    font-family: inherit;
+  }
+  textarea { resize: vertical; min-height: 60px; }
+
+  .btn {
+    display: inline-block;
+    padding: 10px 18px;
+    border-radius: 7px;
+    border: none;
+    background: var(--navy-light);
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    margin-top: 14px;
+  }
+  .btn.gold { background: var(--gold); color: var(--navy); }
+  .btn.outline { background: transparent; border: 1px solid var(--border); color: var(--text); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .result-box {
+    margin-top: 18px;
+    padding: 16px;
+    border-radius: 10px;
+    background: var(--bg-alt);
+    border: 1px solid var(--gold);
+  }
+  .result-box h3 { margin-top: 0; color: var(--gold-dark); }
+
+  .rubric-row { margin-bottom: 18px; padding-bottom: 12px; border-bottom: 1px dashed var(--border); }
+  .rubric-row .levels { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 8px; }
+  @media (max-width: 720px) { .rubric-row .levels { grid-template-columns: 1fr 1fr; } }
+  .level-opt {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px;
+    font-size: 0.78rem;
+    cursor: pointer;
+    color: var(--text-muted);
+  }
+  .level-opt.selected {
+    border-color: var(--gold);
+    background: var(--bg-alt);
+    color: var(--text);
+    font-weight: 600;
+  }
+  .level-opt strong { display: block; font-size: 0.72rem; text-transform: uppercase; color: var(--gold-dark); margin-bottom: 3px; }
+
+  .quiz-q { margin-bottom: 10px; }
+  .quiz-opt {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 10px 12px;
+    margin: 6px 0;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    background: var(--bg-card);
+    color: var(--text);
+    cursor: pointer;
+    font-size: 0.9rem;
+  }
+  .quiz-opt.correct { border-color: var(--green); background: rgba(47,125,84,0.12); }
+  .quiz-opt.wrong { border-color: var(--red); background: rgba(179,67,43,0.12); }
+  .quiz-opt:disabled { cursor: default; }
+  .coach-note {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    background: var(--bg-alt);
+    border-left: 3px solid var(--gold);
+    padding: 8px 10px;
+    margin-top: 8px;
+    border-radius: 6px;
+  }
+  .tag { display: inline-block; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.04em; background: var(--navy-light); color: #fff; padding: 2px 8px; border-radius: 20px; margin-bottom: 6px; }
+
+  .tally-bar-row { display: flex; align-items: center; gap: 8px; font-size: 0.82rem; margin-bottom: 6px; }
+  .tally-bar-row .label { width: 130px; flex-shrink: 0; color: var(--text-muted); }
+  .tally-bar-track { flex: 1; background: var(--bg-alt); border-radius: 6px; overflow: hidden; height: 10px; }
+  .tally-bar-fill { height: 100%; background: var(--gold); }
+  .tally-bar-row .count { width: 22px; text-align: right; font-weight: 600; }
+
+  .log-entry {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    margin-bottom: 10px;
+    background: var(--bg-card);
+    font-size: 0.85rem;
+  }
+  .log-entry .meta { color: var(--text-muted); font-size: 0.78rem; margin-bottom: 4px; }
+  .banner {
+    padding: 10px 14px;
+    border-radius: 8px;
+    background: rgba(201,162,75,0.15);
+    border: 1px solid var(--gold);
+    font-size: 0.85rem;
+    margin-bottom: 16px;
+  }
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  @media (max-width: 720px) { .two-col { grid-template-columns: 1fr; } }
+  .nn-check { display: flex; align-items: center; gap: 10px; margin: 8px 0; }
+  .nn-check select { max-width: 160px; }
+  .footer-note { text-align: center; color: var(--text-muted); font-size: 0.8rem; margin-top: 40px; }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="inner">
+    <h1>🍽️ THE SERVICE STACK</h1>
+    <p>Building Leaders and Culture, One Shift at a Time</p>
+  </div>
+</header>
+
+<nav class="tabs" id="tabs">
+  <button data-tab="overview" class="active">Overview</button>
+  <button data-tab="preshift">Pre-Shift Builder</button>
+  <button data-tab="archetype">Archetype Quiz</button>
+  <button data-tab="situational">Situational Quiz</button>
+  <button data-tab="audit">Daily Audit Log</button>
+</nav>
+
+<div class="app">
+
+  <!-- OVERVIEW -->
+  <section class="panel active" id="panel-overview">
+    <h2 class="section-title">The 5 Pillars — Critical Management Strengths</h2>
+    <div id="pillars-list"></div>
+
+    <h2 class="section-title">Service Environment Workflow Matrix</h2>
+    <div id="matrix-container"></div>
+
+    <h2 class="section-title">Top 10 Core Hospitality Soft Skills</h2>
+    <ul class="pill-list" id="soft-skills-list"></ul>
+
+    <h2 class="section-title">The 3 Team Non-Negotiables</h2>
+    <ul class="pill-list" id="nn-list"></ul>
+
+    <h2 class="section-title">The 4 Elements of a Great Pre-Shift</h2>
+    <div class="grid3" id="preshift-elements"></div>
+  </section>
+
+  <!-- PRE-SHIFT BUILDER -->
+  <section class="panel" id="panel-preshift">
+    <h2 class="section-title">Pre-Shift Builder</h2>
+    <p style="color:var(--text-muted); font-size:0.9rem;">Fill this out in under 2 minutes before doors open. Pick this week's Big Idea from the library, or write your own.</p>
+
+    <label>This week's focus (or write your own below)</label>
+    <select id="ps-idea-select"></select>
+
+    <label>Tonight's ONE Big Idea</label>
+    <input type="text" id="ps-focus" placeholder="e.g. Eyes up before words out.">
+
+    <label>Clarity — the ONE physical action ("Instead of ___, do ___")</label>
+    <input type="text" id="ps-clarity" placeholder="e.g. Walk the guest to the table instead of pointing.">
+
+    <label>Energy — one word for the tone you need to bring today</label>
+    <input type="text" id="ps-energy" placeholder="e.g. Sharp, Warm, Steady">
+
+    <label>Interactive question #1</label>
+    <input type="text" id="ps-q1" placeholder="e.g. Can someone repeat that back?">
+    <label>Interactive question #2 (reserve for a win from last night)</label>
+    <input type="text" id="ps-q2" value="Who had a win last night? Tell us about it." >
+
+    <label>86's / Specials to mention (30 seconds max)</label>
+    <textarea id="ps-86" placeholder="Keep it short — this is maintenance, not the lesson."></textarea>
+
+    <button class="btn gold" onclick="buildPreShift()">Build My Pre-Shift Card</button>
+
+    <div id="preshift-output"></div>
+  </section>
+
+  <!-- ARCHETYPE QUIZ -->
+  <section class="panel" id="panel-archetype">
+    <h2 class="section-title">Hospitality Management Archetype Assessment</h2>
+    <p style="color:var(--text-muted); font-size:0.9rem;">For each pillar, pick the description that best matches where you are right now on the floor — not where you want to be.</p>
+    <div id="archetype-rubric"></div>
+    <button class="btn gold" onclick="scoreArchetype()">Reveal My Archetype</button>
+    <div id="archetype-result"></div>
+  </section>
+
+  <!-- SITUATIONAL QUIZ -->
+  <section class="panel" id="panel-situational">
+    <h2 class="section-title">Situational Hospitality & Soft Skills Quiz</h2>
+    <div class="two-col">
+      <div>
+        <label>Filter by module</label>
+        <select id="quiz-module-filter"><option value="all">All Modules</option></select>
+      </div>
+      <div>
+        <label>Filter by tier</label>
+        <select id="quiz-tier-filter">
+          <option value="all">All Tiers</option>
+          <option value="QSR / Food Court">QSR / Food Court</option>
+          <option value="Casual Dining">Casual Dining</option>
+          <option value="Fine Dining">Fine Dining</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn outline" onclick="startQuiz()">Start / Restart Quiz</button>
+    <div id="quiz-score" style="margin-top:10px; font-weight:600;"></div>
+    <div id="quiz-container"></div>
+  </section>
+
+  <!-- DAILY AUDIT LOG -->
+  <section class="panel" id="panel-audit">
+    <h2 class="section-title">Daily Per-Shift Audit &amp; Hospitality Recap Log</h2>
+    <div id="db-banner"></div>
+
+    <div class="two-col">
+      <div><label>Outlet</label><input type="text" id="a-outlet" placeholder="e.g. Pronto, Agave, Little Wok"></div>
+      <div><label>Shift</label><select id="a-shift"><option>AM</option><option>PM</option></select></div>
+    </div>
+    <div class="two-col">
+      <div><label>Date</label><input type="date" id="a-date"></div>
+      <div><label>Shift Lead</label><input type="text" id="a-lead" placeholder="Name"></div>
+    </div>
+
+    <h3 class="sub-title">Transaction Standards</h3>
+    <div class="two-col">
+      <div><label>Total transactions spot-checked</label><input type="number" id="a-transactions" min="0"></div>
+      <div><label>Order accuracy (X of Y)</label><input type="text" id="a-accuracy" placeholder="e.g. 18 of 20"></div>
+    </div>
+    <div class="two-col">
+      <div><label>Genuine opener delivered</label>
+        <select id="a-opener"><option>Yes</option><option>Mostly</option><option>Missed</option></select>
+      </div>
+      <div><label>Personalized close delivered</label>
+        <select id="a-close"><option>Yes</option><option>Mostly</option><option>Missed</option></select>
+      </div>
+    </div>
+
+    <h3 class="sub-title">Ticket Time Tracking</h3>
+    <div class="two-col">
+      <div><label>Average ticket time (min)</label><input type="number" step="0.1" id="a-avgticket"></div>
+      <div><label>Standard ticket time (min)</label><input type="number" step="0.1" id="a-stdticket"></div>
+    </div>
+    <label>86'd items today</label>
+    <input type="text" id="a-86" placeholder="Comma-separated">
+
+    <h3 class="sub-title">Soft Skill Execution — Spot Check Tally</h3>
+    <div class="grid3" id="a-tally-inputs"></div>
+
+    <h3 class="sub-title">Moment of the Shift / Coaching Needed</h3>
+    <label>Moment of the shift (a specific win, named + quoted)</label>
+    <textarea id="a-moment"></textarea>
+    <label>Coaching needed (a specific miss)</label>
+    <textarea id="a-coaching"></textarea>
+
+    <h3 class="sub-title">Non-Negotiables Check</h3>
+    <div id="a-nn-checks"></div>
+
+    <button class="btn gold" id="a-submit-btn" onclick="submitAudit()">Submit Log</button>
+    <div id="a-submit-msg"></div>
+
+    <h2 class="section-title">Weekly Soft Skill Heat Map (last 7 logs)</h2>
+    <div id="weekly-heatmap"></div>
+
+    <h2 class="section-title">Recent Logs</h2>
+    <div id="log-history"></div>
+  </section>
+
+</div>
+
+<p class="footer-note">The Service Stack — internal training tool. Built for the food court leadership team.</p>
+
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
+<script>
+  // Firebase project for The Service Stack (Leadership Boot Camp)
+  const firebaseConfig = {
+    apiKey: "AIzaSyALH-4EITI6WIT8ujSKK4OH43_6QvZbpfo",
+    authDomain: "lbcamp-79927.firebaseapp.com",
+    projectId: "lbcamp-79927",
+    storageBucket: "lbcamp-79927.firebasestorage.app",
+    messagingSenderId: "127968428349",
+    appId: "1:127968428349:web:4290a36ff98d0af1760554"
+  };
+  try {
+    if (window.firebase) firebase.initializeApp(firebaseConfig);
+  } catch (e) {
+    console.warn('Firebase failed to initialize — falling back to local storage.', e);
+  }
+</script>
+<script>
+/* ============ DATA ============ */
+
+const PILLARS = [
+  { key: "eq", name: "Emotional Intelligence", tag: "Reading the Room",
+    desc: "The ability to clock the guest who's about to complain before they say a word, and to notice the cashier who's five minutes from tears before it shows up in their tone. On a high-volume floor, EQ is the early warning system.",
+    levels: {
+      emerging: "Notices problems only after a guest complains out loud",
+      developing: "Catches most guest cues but misses subtler staff-side signals",
+      skilled: "Reads guest and staff dynamics in real time, adjusts approach on the fly",
+      mastery: "Anticipates dynamics before they surface; teaches others to read the room"
+    }},
+  { key: "coach", name: "Coaching & Developing Others", tag: "Growth in the Moment",
+    desc: "Turning a mediocre appraisal conversation into a real skill-building moment — catching someone doing something right in the moment and naming it, not just writing it down six months later.",
+    levels: {
+      emerging: "Corrects mistakes but doesn't explain the \"why\"",
+      developing: "Gives feedback, but only during scheduled reviews",
+      skilled: "Coaches in the moment, ties feedback to a specific, repeatable action",
+      mastery: "Turns every shift into a development opportunity without slowing service"
+    }},
+  { key: "decisive", name: "Decisiveness Under Pressure", tag: "Fast, Confident Calls",
+    desc: "The fryer's down, three items just got 86'd, and the POS is frozen with a line to the door. This pillar is the ability to make a call and own it.",
+    levels: {
+      emerging: "Freezes or asks a manager before acting on routine calls",
+      developing: "Makes calls, but second-guesses them out loud in front of the team",
+      skilled: "Makes fast calls and explains the reasoning briefly, without hesitation",
+      mastery: "Owns high-stakes calls calmly enough that the team doesn't feel the pressure"
+    }},
+  { key: "delegate", name: "Delegation & Accountability", tag: "Trust + Results",
+    desc: "Trusting a lead to run an outlet without hovering, while still holding them to the numbers and the standard.",
+    levels: {
+      emerging: "Does the task themselves rather than hand it off",
+      developing: "Delegates tasks but still checks every 10 minutes",
+      skilled: "Delegates outcomes, not just tasks, and checks results not process",
+      mastery: "Builds leads who delegate the same way — the trust ladder replicates itself"
+    }},
+  { key: "comm", name: "Cross-Functional Communication", tag: "Floor Up, Strategy Down",
+    desc: "Translating what's actually happening on the floor into language upper management can act on — and translating strategy from upstairs into something the front line can execute.",
+    levels: {
+      emerging: "Reports up in vague, reactive terms (\"things are crazy\")",
+      developing: "Reports facts, but without the \"so what\" upper management needs",
+      skilled: "Translates floor chaos into a clear ask or update, unprompted",
+      mastery: "Is the translation layer upper management relies on without having to ask"
+    }}
+];
+
+const ARCHETYPES = [
+  { pair: ["decisive","eq"], name: "The High-Volume Catalyst", desc: "Thrives where speed and chaos collide. Turns a slammed food court into a well-oiled machine by making calls fast and reading the line's mood in real time. Best deployed where volume, not nuance, is the daily test." },
+  { pair: ["delegate","eq"], name: "The Floor Choreographer", desc: "Builds a team that runs like a rehearsed dance without needing constant direction. Excels in fine dining and casual dining floors where coordination and anticipation matter more than raw speed." },
+  { pair: ["eq","comm"], name: "The Guest Experience Architect", desc: "Designs the feel of a shift, not just the transactions. Reads the guest, then makes sure the whole team — and upper management — understands what that guest needed and why." },
+  { pair: ["comm","coach"], name: "The Bridge Builder", desc: "The translator between floor and office. Naturally turns strategy into floor-level action and floor reality into upstream insight." },
+  { pair: ["coach","delegate"], name: "The Talent Grower", desc: "Builds people, not just shifts. Their outlets consistently produce the next generation of leads because they hand off real ownership early and coach relentlessly along the way." }
+];
+
+const SOFT_SKILLS = [
+  ["Active Listening", "Hearing the actual request, not the assumed one"],
+  ["Empathy", "Feeling the guest's moment, not just processing their order"],
+  ["Adaptability", "Shifting plans mid-shift without losing composure"],
+  ["Conflict Resolution", "De-escalating without surrendering the standard"],
+  ["Time Management", "Reading the clock without rushing the guest"],
+  ["Stress Tolerance", "Staying steady when the floor isn't"],
+  ["Teamwork", "Covering a teammate without being asked"],
+  ["Clear Communication", "Saying the true thing in the fewest words"],
+  ["Problem-Solving", "Finding the workaround before escalating"],
+  ["Attention to Detail", "Catching the small thing before it becomes the big complaint"]
+];
+
+const NON_NEGOTIABLES = [
+  ["The First Look", "Every guest gets genuine acknowledgment within seconds of arriving, no exceptions for how busy it is."],
+  ["Own It, Don't Toss It", "Every issue gets owned by whoever hears it first, until it's properly handed off — never \"not my department.\""],
+  ["The Send-Off With Substance", "Every guest leaves with a specific, non-generic close tied to what they actually ordered or experienced."]
+];
+
+const PRESHIFT_ELEMENTS = [
+  ["1. Focus", "One Big Idea, not nine. 86's and specials are maintenance — cover them in 30 seconds. Pick the single hospitality idea you want better tonight and teach it like it's the only thing that matters."],
+  ["2. Clarity", "Tell them exactly what it looks like. \"Walk the guest to the table\" beats \"be more hospitable.\" Vague asks get vague results."],
+  ["3. Energy", "Your team catches your temperature before they hear your words. If you wouldn't want to listen to you, neither will they."],
+  ["4. Interactive", "Talk with them, not at them. Ask what they learned. Let someone tell their win out loud — people remember what they say themselves."]
+];
+
+const ONE_BIG_IDEAS = [
+  { skill: "Active Listening", idea: "Repeat it back before you ring it.", action: "Cashier repeats the order back in their own words before hitting total" },
+  { skill: "The First Look", idea: "Eyes up before words out.", action: "Acknowledge the guest with eye contact before saying anything else" },
+  { skill: "Own It, Don't Toss It", idea: "If you hear it, you own it.", action: "Whoever hears a complaint stays with the guest until it's resolved or properly handed off" },
+  { skill: "Empathy", idea: "Guess their day before you guess their order.", action: "Notice one visible cue (rushed, tired, celebrating) and adjust tone accordingly" },
+  { skill: "The Send-Off", idea: "Name the item, not just 'enjoy.'", action: "Close every transaction referencing the specific item(s) purchased" }
+];
+
+const MATRIX = [
+  { module: "Module 1: The Guest Read", sub: "Emotional Intelligence · Empathy · Active Listening",
+    rows: [
+      ["QSR / Food Court", "Scanning the line for the impatient guest, the one juggling kids and a tray, the one lost reading the menu board. Reads happen in 2-3 seconds, at volume.", "Speed-drill role plays: cashier gets a flashcard guest type, has 5 seconds to identify the read and adjust their opener."],
+      ["Casual Dining", "Reading a table's pace — rushing for a show, settling in, celebrating something. Reading a whole section, not just one interaction.", "Table-read shadowing: new server shadows a lead, calls out the table's \"vibe,\" lead confirms or corrects live."],
+      ["Fine Dining", "Anticipating an unspoken need before the guest raises a hand — the empty water glass, the first date wanting privacy, the regular whose order just changed.", "Silent-service drills: server identifies and acts on 3 unspoken cues during a mock course."]
+    ]},
+  { module: "Module 2: The Recovery Play", sub: "Decisiveness Under Pressure · Stress Tolerance · Adaptability",
+    rows: [
+      ["QSR / Food Court", "Item's 86'd mid-rush — cashier redirects the guest to an alternative in one breath, no apology spiral.", "\"86 Drills\": trainer calls out an 86'd item mid-shift, cashier has 3 seconds to pivot the guest."],
+      ["Casual Dining", "Kitchen's backed up, ticket time creeping past standard — server manages expectations before the table asks.", "Scenario cards: \"Table 12's entrees are 12 minutes late, they have a movie at 7.\""],
+      ["Fine Dining", "A course comes back wrong from the kitchen — recovery has to be seamless enough the guest never feels it.", "Mock service recovery under an audience, scored on whether it ever \"broke character.\""]
+    ]},
+  { module: "Module 3: The Handoff", sub: "Delegation & Accountability · Teamwork · Time Management",
+    rows: [
+      ["QSR / Food Court", "Lead trusts a cashier to own register accuracy without checking every drawer — reviews numbers daily and coaches on misses.", "\"Trust ladder\": new hires graduate to solo accountability after 3 clean shifts in a row."],
+      ["Casual Dining", "Server and busser coordinate table turns without a manager quarterbacking every reset.", "Team relay drills during slow hours, timed and scored as a two-person unit."],
+      ["Fine Dining", "Captain delegates full course choreography to a server team, stepping back to observe.", "\"Captain's Eye\" shadow shifts: senior server runs the section solo, captain debriefs after."]
+    ]},
+  { module: "Module 4: The Message", sub: "Cross-Functional Communication · Conflict Resolution · Coaching & Developing Others",
+    rows: [
+      ["QSR / Food Court", "Cashier flags a recurring complaint pattern up to the lead in one clear sentence during a lull.", "\"One-Sentence Reports\": cashiers compress a floor observation into one actionable line."],
+      ["Casual Dining", "Server and kitchen communicate a modification clearly enough it survives being relayed twice.", "Telephone-game drills with real ticket modifications."],
+      ["Fine Dining", "Captain translates a VIP's unspoken preference into precise, private instruction before the guest sits down.", "Pre-shift briefing simulations: brief a section on a VIP in under 90 seconds, zero ambiguity."]
+    ]}
+];
+
+const QUIZ_BANK = [
+  { module: "The Guest Read", tier: "QSR / Food Court",
+    situation: "You're mid-rush. A guest at the register is scanning the menu board with a confused look, shifting their weight, while the line behind them grows.",
+    options: [
+      "Wait for them to ask a question before saying anything",
+      "Point at the board and say \"take your time\"",
+      "Offer a quick, warm suggestion based on what looks like their hesitation, without rushing them",
+      "Skip them and help the next guest until they're ready"
+    ], correct: 2, skill: "Active Listening / Emotional Intelligence",
+    note: "A confused guest at the register is a read, not an interruption. A quick, genuine suggestion moves the line without making them feel rushed — silence just leaves them stuck." },
+  { module: "The Guest Read", tier: "Casual Dining",
+    situation: "A table of four is looking around the room and checking the time repeatedly, though they haven't flagged you down.",
+    options: [
+      "Ignore it since they haven't asked for anything",
+      "Approach and let them know you noticed they seem to be on a schedule, and offer to speed up their next course",
+      "Rush their food out without saying anything",
+      "Wait until they complain to act"
+    ], correct: 1, skill: "Empathy / Active Listening",
+    note: "Naming what you noticed, out loud, turns an unspoken cue into a moment of genuine hospitality — and buys you goodwill if the kitchen does end up running slow." },
+  { module: "The Recovery Play", tier: "QSR / Food Court",
+    situation: "The item a guest just ordered gets 86'd the second you ring it in.",
+    options: [
+      "Apologize repeatedly and ask them to pick something else",
+      "Immediately suggest a specific, similar alternative in the same breath as telling them",
+      "Call a manager over before saying anything to the guest",
+      "Refund them and let them leave"
+    ], correct: 1, skill: "Decisiveness Under Pressure / Adaptability",
+    note: "Pairing the bad news with a specific alternative in one breath keeps the line moving and the guest feeling taken care of instead of stuck." },
+  { module: "The Recovery Play", tier: "Fine Dining",
+    situation: "A course comes back from the kitchen visibly wrong just as you're about to deliver it to the table.",
+    options: [
+      "Deliver it anyway and hope they don't notice",
+      "Explain to the table that the kitchen made a mistake and it will be a few more minutes",
+      "Quietly hold the plate, calmly return it, and reset the table's expectations with a brief, composed update with no blame assigned",
+      "Ask the table if they're okay waiting a bit longer without explanation"
+    ], correct: 2, skill: "Stress Tolerance / Composure",
+    note: "In fine dining, the recovery IS the performance. A calm, blameless reset protects the guest's experience — narrating the kitchen's mistake breaks the illusion of effortless service." },
+  { module: "The Handoff", tier: "QSR / Food Court",
+    situation: "A newer cashier has had three clean, accurate shifts in a row with no drawer discrepancies.",
+    options: [
+      "Keep double-checking their drawer every shift indefinitely",
+      "Move them to the trust ladder's next stage: solo accountability, with daily number reviews instead of constant checks",
+      "Give them more responsibility with no follow-up at all",
+      "Wait for six months before considering any change"
+    ], correct: 1, skill: "Delegation & Accountability",
+    note: "Delegation without accountability is abandonment; accountability without delegation is micromanagement. The trust ladder does both at once." },
+  { module: "The Handoff", tier: "Casual Dining",
+    situation: "You notice a server and busser aren't coordinating table resets — sometimes both show up, sometimes neither does.",
+    options: [
+      "Start quarterbacking every single reset yourself",
+      "Assign clear, specific ownership of who resets what and by when, then step back and check results",
+      "Say nothing and hope they figure it out",
+      "Write both of them up immediately"
+    ], correct: 1, skill: "Delegation & Accountability / Teamwork",
+    note: "Clear ownership prevents the double-coverage-or-no-coverage problem without requiring a manager to referee every table." },
+  { module: "The Message", tier: "QSR / Food Court",
+    situation: "You've noticed three guests this week ask the same confused question about a specific menu item.",
+    options: [
+      "Mention it vaguely to a coworker: \"people keep asking about that thing\"",
+      "Say nothing since it hasn't caused a real problem yet",
+      "Flag it to your lead in one clear, specific sentence during a lull: which item, what the confusion is, and how often it's happening",
+      "Wait for a guest to complain loudly before saying anything"
+    ], correct: 2, skill: "Cross-Functional Communication",
+    note: "A specific, one-sentence report is something a lead can actually act on. Vague pattern-noticing dies in casual conversation." },
+  { module: "The Message", tier: "Fine Dining",
+    situation: "You just learned a VIP guest arriving tonight has a specific, unstated preference from a past visit.",
+    options: [
+      "Mention it briefly to whoever happens to be near the table when they arrive",
+      "Brief the entire section clearly and specifically before the guest sits down, so everyone acts on it without being reminded",
+      "Assume the guest will just ask again if it matters",
+      "Write a note and leave it at the host stand"
+    ], correct: 1, skill: "Cross-Functional Communication / Coaching",
+    note: "A clear pre-shift briefing to the whole team removes ambiguity. A guest with a real preference and needing to ask twice reads as a service failure." }
+];
+
+/* ============ TAB SWITCHING ============ */
+document.getElementById('tabs').addEventListener('click', (e) => {
+  const btn = e.target.closest('button[data-tab]');
+  if (!btn) return;
+  document.querySelectorAll('nav.tabs button').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('section.panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+});
+
+/* ============ RENDER OVERVIEW ============ */
+function renderOverview() {
+  const pWrap = document.getElementById('pillars-list');
+  pWrap.innerHTML = PILLARS.map(p => `
+    <div class="card">
+      <span class="tag">${p.tag}</span>
+      <h4>${p.name}</h4>
+      <p>${p.desc}</p>
+    </div>`).join('');
+
+  const mWrap = document.getElementById('matrix-container');
+  mWrap.innerHTML = MATRIX.map(m => `
+    <h3 class="sub-title">${m.module}</h3>
+    <p style="color:var(--text-muted); font-size:0.85rem; margin-top:-6px;">${m.sub}</p>
+    <table class="matrix">
+      <tr><th style="width:18%">Tier</th><th style="width:41%">What It Looks Like</th><th style="width:41%">How It's Taught</th></tr>
+      ${m.rows.map(r => `<tr><td><strong>${r[0]}</strong></td><td>${r[1]}</td><td>${r[2]}</td></tr>`).join('')}
+    </table>`).join('');
+
+  document.getElementById('soft-skills-list').innerHTML = SOFT_SKILLS.map((s,i) =>
+    `<li><strong>${i+1}. ${s[0]}</strong> — ${s[1]}</li>`).join('');
+
+  document.getElementById('nn-list').innerHTML = NON_NEGOTIABLES.map(n =>
+    `<li><strong>${n[0]}</strong> — ${n[1]}</li>`).join('');
+
+  document.getElementById('preshift-elements').innerHTML = PRESHIFT_ELEMENTS.map(e =>
+    `<div class="card"><h4>${e[0]}</h4><p>${e[1]}</p></div>`).join('');
+}
+
+/* ============ PRE-SHIFT BUILDER ============ */
+function renderPreshiftSelect() {
+  const sel = document.getElementById('ps-idea-select');
+  sel.innerHTML = '<option value="">— write my own below —</option>' +
+    ONE_BIG_IDEAS.map((o,i) => `<option value="${i}">${o.skill}: "${o.idea}"</option>`).join('');
+  sel.addEventListener('change', () => {
+    if (sel.value === '') return;
+    const o = ONE_BIG_IDEAS[sel.value];
+    document.getElementById('ps-focus').value = o.idea;
+    document.getElementById('ps-clarity').value = o.action;
+  });
+}
+
+function buildPreShift() {
+  const focus = document.getElementById('ps-focus').value.trim() || '(not set)';
+  const clarity = document.getElementById('ps-clarity').value.trim() || '(not set)';
+  const energy = document.getElementById('ps-energy').value.trim() || '(not set)';
+  const q1 = document.getElementById('ps-q1').value.trim() || '(not set)';
+  const q2 = document.getElementById('ps-q2').value.trim() || 'Who had a win last night? Tell us about it.';
+  const eightySix = document.getElementById('ps-86').value.trim() || '(none noted)';
+
+  document.getElementById('preshift-output').innerHTML = `
+    <div class="result-box">
+      <h3>Tonight's Pre-Shift Card</h3>
+      <p><strong>FOCUS:</strong> ${focus}</p>
+      <p><strong>CLARITY:</strong> ${clarity}</p>
+      <p><strong>ENERGY:</strong> ${energy}</p>
+      <p><strong>INTERACTIVE Q1:</strong> ${q1}</p>
+      <p><strong>INTERACTIVE Q2:</strong> ${q2}</p>
+      <p><strong>86's / Specials (30 sec):</strong> ${eightySix}</p>
+      <hr style="border:none; border-top:1px solid var(--border); margin:12px 0;">
+      <p style="color:var(--text-muted); font-size:0.85rem;">Script shape: Energy check-in (30s) → Win of the day (30s) → The One Big Idea, demonstrated (90s) → Interactive check (60s) → 86's/specials (30s) → Send-off (60s).</p>
+    </div>`;
+}
+
+/* ============ ARCHETYPE QUIZ ============ */
+let archetypeSelections = {};
+function renderArchetypeRubric() {
+  const wrap = document.getElementById('archetype-rubric');
+  wrap.innerHTML = PILLARS.map(p => `
+    <div class="rubric-row" data-pillar="${p.key}">
+      <strong>${p.name}</strong>
+      <div class="levels">
+        ${Object.entries(p.levels).map(([lvl, text]) => `
+          <div class="level-opt" data-level="${lvl}" onclick="selectLevel('${p.key}','${lvl}', this)">
+            <strong>${lvl}</strong>${text}
+          </div>`).join('')}
+      </div>
+    </div>`).join('');
+}
+function selectLevel(pillarKey, level, el) {
+  archetypeSelections[pillarKey] = level;
+  el.parentElement.querySelectorAll('.level-opt').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+}
+const LEVEL_SCORE = { emerging: 1, developing: 2, skilled: 3, mastery: 4 };
+function scoreArchetype() {
+  const missing = PILLARS.filter(p => !archetypeSelections[p.key]);
+  if (missing.length) {
+    document.getElementById('archetype-result').innerHTML =
+      `<div class="banner">Pick a level for every pillar first — you're missing: ${missing.map(m=>m.name).join(', ')}.</div>`;
+    return;
+  }
+  const scored = PILLARS.map(p => ({ key: p.key, name: p.name, score: LEVEL_SCORE[archetypeSelections[p.key]] }))
+    .sort((a,b) => b.score - a.score);
+  const top2 = [scored[0].key, scored[1].key];
+  let match = ARCHETYPES.find(a => top2.every(k => a.pair.includes(k)));
+  if (!match) {
+    // fall back to closest match sharing at least one top pillar
+    match = ARCHETYPES.find(a => a.pair.includes(top2[0])) || ARCHETYPES[0];
+  }
+  document.getElementById('archetype-result').innerHTML = `
+    <div class="result-box">
+      <h3>Your Archetype: ${match.name}</h3>
+      <p>${match.desc}</p>
+      <p style="margin-top:10px; font-size:0.85rem; color:var(--text-muted);">
+        Your strongest pillars: <strong>${scored[0].name}</strong> and <strong>${scored[1].name}</strong>.
+      </p>
+    </div>`;
+}
+
+/* ============ SITUATIONAL QUIZ ============ */
+let quizState = { list: [], index: 0, correct: 0, answered: false };
+function populateModuleFilter() {
+  const modules = [...new Set(QUIZ_BANK.map(q => q.module))];
+  const sel = document.getElementById('quiz-module-filter');
+  sel.innerHTML = '<option value="all">All Modules</option>' + modules.map(m => `<option value="${m}">${m}</option>`).join('');
+}
+function startQuiz() {
+  const mod = document.getElementById('quiz-module-filter').value;
+  const tier = document.getElementById('quiz-tier-filter').value;
+  let list = QUIZ_BANK.filter(q => (mod === 'all' || q.module === mod) && (tier === 'all' || q.tier === tier));
+  if (list.length === 0) {
+    document.getElementById('quiz-container').innerHTML = '<div class="banner">No questions match that filter yet.</div>';
+    return;
+  }
+  quizState = { list, index: 0, correct: 0, answered: false };
+  renderQuizQuestion();
+}
+function renderQuizQuestion() {
+  const q = quizState.list[quizState.index];
+  document.getElementById('quiz-score').textContent = `Question ${quizState.index+1} of ${quizState.list.length} — Score: ${quizState.correct}`;
+  document.getElementById('quiz-container').innerHTML = `
+    <div class="card quiz-q">
+      <span class="tag">${q.module} — ${q.tier}</span>
+      <p style="margin:8px 0 12px;">${q.situation}</p>
+      ${q.options.map((opt,i) => `<button class="quiz-opt" onclick="answerQuiz(${i})">${String.fromCharCode(65+i)}) ${opt}</button>`).join('')}
+      <div id="quiz-feedback"></div>
+    </div>`;
+}
+function answerQuiz(i) {
+  if (quizState.answered) return;
+  quizState.answered = true;
+  const q = quizState.list[quizState.index];
+  const buttons = document.querySelectorAll('#quiz-container .quiz-opt');
+  buttons.forEach((b, idx) => {
+    b.disabled = true;
+    if (idx === q.correct) b.classList.add('correct');
+    if (idx === i && i !== q.correct) b.classList.add('wrong');
+  });
+  if (i === q.correct) quizState.correct++;
+  document.getElementById('quiz-feedback').innerHTML = `
+    <div class="coach-note"><strong>Skill: ${q.skill}</strong><br>${q.note}</div>
+    ${quizState.index < quizState.list.length - 1
+      ? `<button class="btn gold" onclick="nextQuizQuestion()">Next Question →</button>`
+      : `<button class="btn gold" onclick="startQuiz()">Restart Quiz</button>`}
+  `;
+  document.getElementById('quiz-score').textContent = `Question ${quizState.index+1} of ${quizState.list.length} — Score: ${quizState.correct}`;
+}
+function nextQuizQuestion() {
+  quizState.index++;
+  quizState.answered = false;
+  renderQuizQuestion();
+}
+
+/* ============ DAILY AUDIT LOG (Firebase, with claude.ai db + localStorage fallbacks) ============ */
+let dbNs = null;        // claude.ai artifact db capability (only exists inside claude.ai)
+let firestoreDb = null; // Firebase Firestore (used on GitHub Pages / standalone)
+const TALLY_SKILLS = ["Active Listening","Empathy","Adaptability","Conflict Resolution","Time Management","Stress Tolerance","Teamwork","Clear Communication","Problem-Solving","Attention to Detail"];
+
+function renderTallyInputs() {
+  document.getElementById('a-tally-inputs').innerHTML = TALLY_SKILLS.map(s => `
+    <div>
+      <label>${s}</label>
+      <input type="number" min="0" value="0" data-skill="${s}" class="tally-input">
+    </div>`).join('');
+}
+function renderNNChecks() {
+  document.getElementById('a-nn-checks').innerHTML = NON_NEGOTIABLES.map((n,i) => `
+    <div class="nn-check">
+      <span style="flex:1;">${n[0]}</span>
+      <select data-nn="${i}"><option>Yes</option><option>Partial</option><option>No</option></select>
+    </div>`).join('');
+}
+
+const LOCAL_STORAGE_KEY = 'service-stack-audit-logs';
+
+function loadLocalLogs() {
+  try {
+    const raw = localStorage.getItem(LOCAL_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    return [];
+  }
+}
+function saveLocalLogs(logs) {
+  try {
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(logs.slice(0, 50)));
+  } catch (e) { /* storage full or unavailable — ignore */ }
+}
+
+async function initDb() {
+  const banner = document.getElementById('db-banner');
+
+  // Tier 1: claude.ai artifact db capability (only present when opened inside claude.ai)
+  try {
+    dbNs = (window.claude && typeof window.claude.use === 'function')
+      ? await window.claude.use('db')
+      : null;
+  } catch (e) {
+    dbNs = null;
+  }
+  if (dbNs) {
+    banner.innerHTML = '';
+    subscribeToLogs();
+    return;
+  }
+
+  // Tier 2: Firebase Firestore (the standalone / GitHub Pages path)
+  try {
+    if (window.firebase && firebase.apps && firebase.apps.length) {
+      firestoreDb = firebase.firestore();
+      banner.innerHTML = '';
+      subscribeToLogsFirebase();
+      return;
+    }
+  } catch (e) {
+    firestoreDb = null;
+  }
+
+  // Tier 3: localStorage only (Firebase failed to load / offline)
+  banner.innerHTML = `<div class="banner">Running fully offline: logs are saved on this device only, not shared with other shift leads.</div>`;
+  localLogs = loadLocalLogs();
+  renderLogHistory(localLogs);
+  renderHeatmap(localLogs.slice(0,7));
+}
+
+function todayStr() {
+  const d = new Date();
+  return d.toISOString().slice(0,10);
+}
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('a-date').value = todayStr();
+});
+
+async function submitAudit() {
+  const btn = document.getElementById('a-submit-btn');
+  const msg = document.getElementById('a-submit-msg');
+  const tally = {};
+  document.querySelectorAll('.tally-input').forEach(inp => { tally[inp.dataset.skill] = Number(inp.value) || 0; });
+  const nn = {};
+  document.querySelectorAll('[data-nn]').forEach(sel => { nn[NON_NEGOTIABLES[sel.dataset.nn][0]] = sel.value; });
+
+  const entry = {
+    outlet: document.getElementById('a-outlet').value.trim() || 'Unspecified',
+    shift: document.getElementById('a-shift').value,
+    date: document.getElementById('a-date').value || todayStr(),
+    lead: document.getElementById('a-lead').value.trim() || 'Unspecified',
+    transactions: Number(document.getElementById('a-transactions').value) || 0,
+    accuracy: document.getElementById('a-accuracy').value.trim(),
+    opener: document.getElementById('a-opener').value,
+    close: document.getElementById('a-close').value,
+    avgTicket: Number(document.getElementById('a-avgticket').value) || null,
+    stdTicket: Number(document.getElementById('a-stdticket').value) || null,
+    eightySix: document.getElementById('a-86').value.trim(),
+    tally,
+    moment: document.getElementById('a-moment').value.trim(),
+    coaching: document.getElementById('a-coaching').value.trim(),
+    nonNegotiables: nn,
+    createdAt: Date.now()
+  };
+
+  btn.disabled = true;
+
+  if (dbNs) {
+    try {
+      await dbNs.collection('audit_logs').add(entry);
+      msg.innerHTML = `<div class="banner">Log submitted.</div>`;
+    } catch (e) {
+      msg.innerHTML = `<div class="banner">Couldn't save the log right now — try again in a moment.</div>`;
+    }
+    btn.disabled = false;
+    return;
+  }
+
+  if (firestoreDb) {
+    try {
+      await firestoreDb.collection('audit_logs').add(entry);
+      msg.innerHTML = `<div class="banner">Log submitted.</div>`;
+    } catch (e) {
+      msg.innerHTML = `<div class="banner">Couldn't save the log right now (${e.code || 'error'}) — try again in a moment.</div>`;
+    }
+    btn.disabled = false;
+    return;
+  }
+
+  // Offline fallback
+  localLogs.unshift(entry);
+  saveLocalLogs(localLogs);
+  renderLogHistory(localLogs);
+  renderHeatmap(localLogs.slice(0,7));
+  msg.innerHTML = `<div class="banner">Saved to this device.</div>`;
+  btn.disabled = false;
+}
+
+let localLogs = [];
+function subscribeToLogs() {
+  try {
+    dbNs.collection('audit_logs').orderBy('createdAt', 'desc').limit(20).onSnapshot(
+      (snap) => {
+        const docs = snap.docs ? snap.docs.map(d => d.data ? d.data() : d) : [];
+        renderLogHistory(docs);
+        renderHeatmap(docs.slice(0,7));
+      },
+      (err) => {
+        document.getElementById('log-history').innerHTML = `<div class="banner">Live log sync stopped (${err.code}). Reload to try again.</div>`;
+      }
+    );
+  } catch (e) {
+    // ignore
+  }
+}
+
+function subscribeToLogsFirebase() {
+  try {
+    firestoreDb.collection('audit_logs').orderBy('createdAt', 'desc').limit(20).onSnapshot(
+      (snap) => {
+        const docs = snap.docs.map(d => d.data());
+        renderLogHistory(docs);
+        renderHeatmap(docs.slice(0,7));
+      },
+      (err) => {
+        document.getElementById('log-history').innerHTML = `<div class="banner">Live log sync stopped (${err.code || err.message}). Reload to try again.</div>`;
+      }
+    );
+  } catch (e) {
+    // ignore
+  }
+}
+
+function renderLogHistory(docs) {
+  const wrap = document.getElementById('log-history');
+  if (!docs || docs.length === 0) {
+    wrap.innerHTML = `<p style="color:var(--text-muted); font-size:0.9rem;">No logs submitted yet.</p>`;
+    return;
+  }
+  wrap.innerHTML = docs.map(d => `
+    <div class="log-entry">
+      <div class="meta">${d.date || ''} · ${d.shift || ''} · ${d.outlet || ''} · Lead: ${d.lead || ''}</div>
+      <div><strong>Transactions:</strong> ${d.transactions ?? '—'} spot-checked, accuracy ${d.accuracy || '—'}</div>
+      <div><strong>Opener:</strong> ${d.opener || '—'} · <strong>Close:</strong> ${d.close || '—'}</div>
+      <div><strong>Avg ticket:</strong> ${d.avgTicket ?? '—'} min (std ${d.stdTicket ?? '—'})</div>
+      ${d.moment ? `<div><strong>Moment:</strong> ${d.moment}</div>` : ''}
+      ${d.coaching ? `<div><strong>Coaching needed:</strong> ${d.coaching}</div>` : ''}
+    </div>`).join('');
+}
+
+function renderHeatmap(docs) {
+  const wrap = document.getElementById('weekly-heatmap');
+  if (!docs || docs.length === 0) {
+    wrap.innerHTML = `<p style="color:var(--text-muted); font-size:0.9rem;">Submit logs to see the weekly pattern.</p>`;
+    return;
+  }
+  const totals = {};
+  TALLY_SKILLS.forEach(s => totals[s] = 0);
+  docs.forEach(d => {
+    if (d.tally) TALLY_SKILLS.forEach(s => totals[s] += (d.tally[s] || 0));
+  });
+  const max = Math.max(1, ...Object.values(totals));
+  wrap.innerHTML = TALLY_SKILLS.map(s => `
+    <div class="tally-bar-row">
+      <div class="label">${s}</div>
+      <div class="tally-bar-track"><div class="tally-bar-fill" style="width:${(totals[s]/max*100).toFixed(0)}%"></div></div>
+      <div class="count">${totals[s]}</div>
+    </div>`).join('');
+}
+
+/* ============ INIT ============ */
+renderOverview();
+renderPreshiftSelect();
+renderArchetypeRubric();
+populateModuleFilter();
+renderTallyInputs();
+renderNNChecks();
+initDb();
+
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./service-worker.js').catch(() => {});
+  });
+}
+</script>
+</body>
+</html>
