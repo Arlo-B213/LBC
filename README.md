@@ -1,45 +1,62 @@
-# The Service Stack — PWA Deployment
+# Leadership Manual Integration — File Placement
 
-## Files
-- `index.html` — the app
-- `manifest.json` — makes it installable
-- `service-worker.js` — caches the app shell for offline use
-- `icon-192.png`, `icon-512.png` — app icons
+I verified all of this with a real `npm install && npm run build` (and `npx oxlint`)
+in a clone of your repo — it compiles clean. Here's where each file goes in
+`Arlo-B213/Leadership-Assessment`:
 
-## Deploy to GitHub Pages (same pattern as your other trackers)
-1. Create a new repo (or a folder in an existing one), e.g. `Service-Stack`.
-2. Push all 5 files to the repo root — keep them all in the same folder,
-   the relative paths in index.html/manifest.json depend on that.
-3. In the repo Settings → Pages, set the source to the branch/folder
-   you pushed to.
-4. Visit `https://<your-username>.github.io/Service-Stack/` — Chrome
-   and Safari will offer "Add to Home Screen" / an install icon in
-   the address bar.
+| File here | Goes to (replaces existing) |
+|---|---|
+| `scenarios.js` | `src/data/scenarios.js` |
+| `trainingModules.js` | `src/data/trainingModules.js` (**new file**) |
+| `Manual.jsx` | `src/pages/Manual.jsx` (**new file**) |
+| `App.jsx` | `src/App.jsx` |
+| `Layout.jsx` | `src/components/Layout.jsx` |
 
-## Shared audit log data (Firebase)
-The Daily Audit Log now writes to the `lbcamp-79927` Firebase project
-(Firestore, collection `audit_logs`), so every shift lead's submission
-shows up live for everyone with the link — same pattern as your Soft
-Skills KPI Tracker. It falls back automatically, in order:
-1. Firebase Firestore (used on GitHub Pages / any normal browser)
-2. `localStorage` (only if Firebase can't load — fully offline)
+## What changed
 
-### One-time setup: open the Firestore rules
-Since this app has no login, Firestore needs rules that allow
-reads/writes without authentication. In the Firebase console for
-`lbcamp-79927` → **Firestore Database → Rules**, use:
+- **`scenarios.js`** — added 3 new hospitality/food-court scenarios (s6-s8:
+  an 86'd item mid-rush, a cashier close to breaking, a VIP table's wrong
+  course) in the exact same branching format as your existing 5. This also
+  fixed a latent escaping bug in the existing file (`isn\\'t` had a doubled
+  backslash in several places, which is invalid JS and would fail a build —
+  worth knowing in case that file gets hand-edited again).
+- **`trainingModules.js`** (new) — the Module 1 content (scripting matrix,
+  engagement mechanics, dual-track growth) as structured data, same pattern
+  as your `styles.js`. Modules 2 and 3 are placeholder `null`s — dropping
+  real content into this one file is all that's needed to light them up on
+  the `/manual` page, no page code changes required.
+- **`Manual.jsx`** (new) — the Leadership Manual page, styled to match your
+  existing cards/tables/typography exactly (same slate/indigo palette,
+  same `rounded-xl border border-slate-200` card style as `TeamPage.jsx`
+  and `ScenarioList.jsx`).
+- **`App.jsx`** — added the `/manual` route.
+- **`Layout.jsx`** — added "Leadership Manual" to the Tools dropdown.
 
+## What I deliberately did NOT build
+
+Your app already has two things that would have been duplicated:
+- **The 20-question Assessment + 5 Styles system** already does what an
+  "archetype quiz" would do — better, with real scoring and a roadmap.
+- **Practice Scenarios** (`/practice`) already does what a "situational
+  quiz" would do — branching choices, a complication, coached feedback.
+  So instead of a second quiz system, the 3 new scenarios above extend
+  *that* feature with hospitality-specific content.
+
+## Next steps (not yet built)
+- **Pre-Shift Builder** — a daily tool, still to build as a new page.
+- **Daily Audit Log** — should write to Firestore via `src/utils/db.js`
+  the same way results/teams/feedback already do, and its "non-negotiables
+  check" should pull from `Team Standards` (already built on `/team`)
+  instead of a hardcoded list — so whatever standards a manager actually
+  sets there show up automatically in the audit log. Say the word and
+  I'll build these next, verified the same way (clone, build, lint).
+
+## To deploy
 ```
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /audit_logs/{doc} {
-      allow read, write: if true;
-    }
-  }
-}
+git pull                     # make sure you're current
+# copy the files above into place per the table
+git add .
+git commit -m "Add Leadership Manual + hospitality practice scenarios"
+git push
 ```
-
-This is fine for an internal tool only your leads have the link to,
-but it does mean anyone with the Firebase project ID could technically
-read/write that collection — don't put anything sensitive in it.
+Your existing GitHub Actions / Vercel auto-deploy will pick it up from there.
